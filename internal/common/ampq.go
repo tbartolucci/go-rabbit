@@ -1,20 +1,21 @@
 package common
 
 import (
-	"github.com/streadway/amqp"
 	"log"
+
+	"github.com/streadway/amqp"
 )
 
 type AmqpRabbitMQ struct {
-	URL string
+	URL        string
 	Connection *amqp.Connection
-	Channel *amqp.Channel
-	Queue *amqp.Queue
+	Channel    *amqp.Channel
+	Queue      *amqp.Queue
 }
 
-func CreateAmpqRabbitMQ() AmqpRabbitMQ {
+func CreateAmpqRabbitMQ(url string) AmqpRabbitMQ {
 	return AmqpRabbitMQ{
-		URL: "amqp://guest:guest@localhost:5672/",
+		URL: url,
 	}
 }
 
@@ -23,14 +24,20 @@ func (a *AmqpRabbitMQ) Close() {
 	a.Connection.Close()
 }
 
-func (a *AmqpRabbitMQ) GetChannel() *amqp.Channel{
+func (a *AmqpRabbitMQ) handleError(err error, msg string) {
+	if err != nil {
+		log.Fatalf("%s: %s", msg, err)
+	}
+}
+
+func (a *AmqpRabbitMQ) GetChannel() *amqp.Channel {
 	conn, err := amqp.Dial(a.URL)
-	HandleError(err, "Con't connect to Rabbit")
+	a.handleError(err, "Con't connect to Rabbit")
 
 	a.Connection = conn
 
 	amqpChannel, err := conn.Channel()
-	HandleError(err, "Can't create a amqpChannel")
+	a.handleError(err, "Can't create a amqpChannel")
 
 	a.Channel = amqpChannel
 
@@ -42,12 +49,12 @@ func (a *AmqpRabbitMQ) GetQueue(queueName string) amqp.Queue {
 		a.GetChannel()
 	}
 	queue, err := a.Channel.QueueDeclare(queueName, true, false, false, false, nil)
-	HandleError(err, "Couldn't declar `add`  queue")
+	a.handleError(err, "Couldn't declar `add`  queue")
 	a.Queue = &queue
 	return queue
 }
 
-func (a *AmqpRabbitMQ) GetMessageChannel(queueName string) <-chan amqp.Delivery{
+func (a *AmqpRabbitMQ) GetMessageChannel(queueName string) <-chan amqp.Delivery {
 	if a.Channel == nil {
 		a.GetChannel()
 	}
@@ -55,8 +62,8 @@ func (a *AmqpRabbitMQ) GetMessageChannel(queueName string) <-chan amqp.Delivery{
 		a.GetQueue(queueName)
 	}
 
-	err := a.Channel.Qos(1,0, false)
-	HandleError(err, "Could not configure QoS")
+	err := a.Channel.Qos(1, 0, false)
+	a.handleError(err, "Could not configure QoS")
 
 	messageChannel, err := a.Channel.Consume(
 		a.Queue.Name,
@@ -67,7 +74,7 @@ func (a *AmqpRabbitMQ) GetMessageChannel(queueName string) <-chan amqp.Delivery{
 		false,
 		nil,
 	)
-	HandleError(err, "Could not register consumer")
+	a.handleError(err, "Could not register consumer")
 
 	return messageChannel
 }

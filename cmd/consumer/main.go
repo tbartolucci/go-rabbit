@@ -1,14 +1,16 @@
 package main
 
 import (
-	"bitsbybit.com/queue-project/internal/common"
 	"encoding/json"
 	"log"
 	"os"
+
+	"bitsbybit.com/queue-project/internal/common"
+	"bitsbybit.com/queue-project/internal/common/message"
 )
 
 func main() {
-	rabbit := common.CreateAmpqRabbitMQ()
+	rabbit := common.CreateAmpqRabbitMQ(common.AMQP_URL)
 	messageChannel := rabbit.GetMessageChannel("add")
 	defer rabbit.Close()
 
@@ -19,7 +21,7 @@ func main() {
 		for d := range messageChannel {
 			log.Printf("Received a message: %s", d.Body)
 
-			addTask := &common.AddTask{}
+			addTask := &message.AddTask{}
 			err := json.Unmarshal(d.Body, addTask)
 			if err != nil {
 				log.Printf("Error decoding JSON: %s", err)
