@@ -1,11 +1,10 @@
-package main
+package api
 
 import (
-	"encoding/json"
-
 	"bitsbybit.com/queue-project/internal/common"
 	"bitsbybit.com/queue-project/internal/common/message"
-
+	"encoding/json"
+	"log"
 	"math/rand"
 	"time"
 )
@@ -23,7 +22,7 @@ func main() {
 	addTask := message.AddTask{Number1: rand.Intn(999), Number2: rand.Intn(999)}
 	body, err := json.Marshal(addTask)
 	if err != nil {
-		common.HandleError(err, "Error encoding JSON")
+		log.Fatalf("%s: %s", "Error encoding JSON", err)
 	}
 
 	rabbit.Publish(QueueName, body)

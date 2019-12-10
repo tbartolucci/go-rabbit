@@ -7,3 +7,8 @@ Docker compose file provided to run a local RabbitMQ. View the status in the
 admin dashboard at [http://localhost:15672](http://localhost:15672)
 
 Structurally probably not the best implementation but reduced duplicate code for this example.
+
+References:
+
+- https://github.com/gin-gonic/gin
+- https://hub.docker.com/_/postgres
